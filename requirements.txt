@@ -1,0 +1,10 @@
+streamlit
+requests
+fastapi
+uvicorn
+pandas
+numpy
+statsmodels
+fredapi
+groq
+python-dotenv
