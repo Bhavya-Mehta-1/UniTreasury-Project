@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from data_tools import get_clean_table, run_analysis, search_series
 
 import os
@@ -36,8 +36,11 @@ def data(codes: str):
     }
 
 @app.get("/analyze")
-def anayze(codes: str, target: str):
-    return run_analysis(codes.split(","), target)
+def anayze(codes: str, target: str, start: str | None = None, end: str | None = None):
+    try:
+        return run_analysis(codes.split(","), target, start, end)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 @app.get("/search")
 def search(query: str):

@@ -1,5 +1,7 @@
 import requests
 import streamlit as st
+from datetime import date
+
 
 API = "http://127.0.0.1:8000"
 
@@ -34,11 +36,25 @@ st.write(st.session_state.basket)
 if len(st.session_state.basket) >= 2:
     target = st.selectbox("Target variable (the one to explain)", st.session_state.basket)
 
+    use_dates = st.checkbox("Limit the date range")
+    if use_dates:
+        start_date = st.date_input("Start date", value=date(2015, 1, 1), min_value=date(1950, 1, 1))
+        end_date = st.date_input("End date", min_value=date(1950, 1, 1))
+
     if st.button("Analyze"):
         codes = ",".join(st.session_state.basket)
-        resp = requests.get(f"{API}/analyze", params={"codes": codes, "target": target})
-        st.session_state.result = resp.json()
-        st.session_state.pop("explanation", None)
+        params = {"codes": codes, "target": target}
+        if use_dates:
+            params["start"] = str(start_date)
+            params["end"] = str(end_date)
+
+        resp = requests.get(f"{API}/analyze", params=params)
+        if resp.status_code != 200:
+            st.error(resp.json()["detail"])
+            st.session_state.pop("result", None)
+        else:
+            st.session_state.result = resp.json()
+            st.session_state.pop("explanation", None)
 
 if "result" in st.session_state:
     result = st.session_state.result

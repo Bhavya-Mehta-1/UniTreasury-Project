@@ -61,7 +61,7 @@ SIGNIFICANCE = 0.05   # the usual cut-off for "statistically significant"
 # =============================================================================
 # STEP 1: DOWNLOAD AND CLEAN THE DATA
 # =============================================================================
-def get_clean_table(codes, max_fill=2):
+def get_clean_table(codes, max_fill=2,start=None,end=None):
     """
     Download each series, convert to ONE value per month, keep only the period
     where every series exists, and fill SMALL holes.
@@ -107,10 +107,16 @@ def get_clean_table(codes, max_fill=2):
 
     table = pd.DataFrame(columns)   # lines everything up by date
 
+    # NEW: cut to the user's chosen window (empty = no cut)
+    if start or end:
+        table = table.loc[start:end]
+        if table.empty or table.isna().all().any():
+            raise ValueError("No data for one or more series in the chosen date range.")
+
     # Keep only the overlap period (see 'Why trim?' above).
-    start = table.apply(lambda c: c.first_valid_index()).max()
-    end = table.apply(lambda c: c.last_valid_index()).min()
-    table = table.loc[start:end]
+    first_common = table.apply(lambda c: c.first_valid_index()).max()
+    last_common = table.apply(lambda c: c.last_valid_index()).min()
+    table = table.loc[first_common:last_common]
 
     # Fill interior gaps with a straight line between neighbours.
     filled = table.interpolate(limit_area="inside")
@@ -531,12 +537,12 @@ def run_diagnostics(ols):
 # The website will call this function and show the dictionary; the Groq AI
 # will later be given this same dictionary and asked to explain it in words.
 # =============================================================================
-def run_analysis(codes, target):
+def run_analysis(codes, target, start=None, end=None):
     if target not in codes:
         raise ValueError("The target must be one of the selected series.")
 
     # Step 1
-    raw_table, data_notes = get_clean_table(codes)
+    raw_table, data_notes = get_clean_table(codes, start=start, end=end)
     if target not in raw_table.columns:
         raise ValueError("The target series could not be used (see data notes).")
     if raw_table.shape[1] < 2:
