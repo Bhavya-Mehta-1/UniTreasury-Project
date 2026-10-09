@@ -3,7 +3,7 @@ import streamlit as st
 from datetime import date
 
 
-API = "http://127.0.0.1:8000"
+API = "https://unitreasury-project.onrender.com"
 
 st.title("Macro Variable Selector")
 
